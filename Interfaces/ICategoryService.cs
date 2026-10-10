@@ -1,5 +1,4 @@
 using System;
-using e_commerce_web_api.Controllers;
 using e_commerce_web_api.DTOs;
 
 namespace e_commerce_web_api.Interfaces;

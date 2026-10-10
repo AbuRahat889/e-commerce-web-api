@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace e_commerce_web_api.Data;
 
-public class AppDbContex : DbContext
+public class AppDbContext : DbContext
 {
-    public AppDbContex(DbContextOptions<AppDbContex> options) : base(options) { }
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
     public DbSet<Category> Categories { get; set; }
 
 }

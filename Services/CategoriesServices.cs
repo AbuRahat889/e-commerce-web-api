@@ -1,6 +1,4 @@
-using System;
 using AutoMapper;
-using e_commerce_web_api.Controllers;
 using e_commerce_web_api.Data;
 using e_commerce_web_api.DTOs;
 using e_commerce_web_api.Interfaces;
@@ -14,11 +12,11 @@ public class CategoriesServices : ICategoryService
 {
     // private static readonly List<Category> _categories = new List<Category>();
 
-    private readonly AppDbContex _appDbContext;
+    private readonly AppDbContext _appDbContext;
 
     private readonly IMapper _mapper;
     // dependency injection 
-    public CategoriesServices(AppDbContex appdbcontext, IMapper mapper)
+    public CategoriesServices(AppDbContext appdbcontext, IMapper mapper)
     {
         _appDbContext = appdbcontext;
         _mapper = mapper;

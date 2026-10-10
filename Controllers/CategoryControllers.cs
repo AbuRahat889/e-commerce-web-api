@@ -33,7 +33,7 @@ namespace e_commerce_web_api.Controllers
 
             if (result == null)
             {
-                return NotFound(ApiResponse<object>.ErrorResponse("Validation Error", 400, new List<string> { "Category is not found with this id!" }));
+                return NotFound(ApiResponse<object>.ErrorResponse("Validation Error", 404, new List<string> { "Category is not found with this id!" }));
             }
             return Ok(ApiResponse<CategoryReadDto>.SuccessResponse(200, "Category retrived successfully", result));
         }

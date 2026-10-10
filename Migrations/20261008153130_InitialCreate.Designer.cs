@@ -11,7 +11,7 @@ using e_commerce_web_api.Data;
 
 namespace e_commerce_web_api.Migrations
 {
-    [DbContext(typeof(AppDbContex))]
+    [DbContext(typeof(AppDbContext))]
     [Migration("20261008153130_InitialCreate")]
     partial class InitialCreate
     {

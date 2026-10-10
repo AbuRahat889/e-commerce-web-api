@@ -10,7 +10,7 @@ using e_commerce_web_api.Data;
 
 namespace e_commerce_web_api.Migrations
 {
-    [DbContext(typeof(AppDbContex))]
+    [DbContext(typeof(AppDbContext))]
     partial class AppDbContexModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
