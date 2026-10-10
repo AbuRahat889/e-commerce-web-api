@@ -1,5 +1,4 @@
 using System;
-using System.Security.Cryptography.X509Certificates;
 using e_commerce_web_api.Models;
 using Microsoft.EntityFrameworkCore;
 
