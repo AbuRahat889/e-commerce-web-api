@@ -1,4 +1,4 @@
-using e_commerce_web_api.Controllers;
+using e_commerce_web_api.Common;
 
 namespace e_commerce_web_api.Middleware;
 

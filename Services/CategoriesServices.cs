@@ -10,8 +10,6 @@ namespace e_commerce_web_api.Services;
 
 public class CategoriesServices : ICategoryService
 {
-    // private static readonly List<Category> _categories = new List<Category>();
-
     private readonly AppDbContext _appDbContext;
 
     private readonly IMapper _mapper;

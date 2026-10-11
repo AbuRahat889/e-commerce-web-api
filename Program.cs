@@ -1,4 +1,4 @@
-using e_commerce_web_api.Controllers;
+using e_commerce_web_api.Common;
 using e_commerce_web_api.Data;
 using e_commerce_web_api.Interfaces;
 using e_commerce_web_api.Middleware;
@@ -13,6 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 // registar controllers
 // builder.Services.AddSingleton()
 builder.Services.AddScoped<ICategoryService, CategoriesServices>();
+builder.Services.AddScoped<IAuthService, AuthServices>();
 builder.Services.AddControllers();
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
