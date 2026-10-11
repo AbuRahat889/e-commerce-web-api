@@ -1,5 +1,7 @@
 using e_commerce_web_api.Common;
+using e_commerce_web_api.Configurations;
 using e_commerce_web_api.Data;
+using e_commerce_web_api.Extensions;
 using e_commerce_web_api.Interfaces;
 using e_commerce_web_api.Middleware;
 using e_commerce_web_api.Models;
@@ -8,6 +10,7 @@ using e_commerce_web_api.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +45,19 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 
 builder.Services.AddEndpointsApiExplorer();
 
+// Bind Jwt settings
+// Register JWT service
+builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.Configure<JwtSettings>(
+    builder.Configuration.GetSection("Jwt")
+);
+
+// Before builder.Build()
+builder.Services.AddJwtAuthentication(
+    builder.Configuration
+);
+
+
 var app = builder.Build();
 // middlewares
 app.UseExceptionHandler();
@@ -51,6 +67,9 @@ app.UseCustomStatusCodePages();
 // app.UseHttpsRedirection();
 
 app.MapGet("/", () => "Welcome to my dotnet application!");
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 app.Run();

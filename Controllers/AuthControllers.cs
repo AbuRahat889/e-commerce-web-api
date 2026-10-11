@@ -38,7 +38,8 @@ public class AuthControllers : ControllerBase
 
         var result = await
          _authservece.SignInUser(data);
-        return Ok(ApiResponse<UserDto>.SuccessResponse(200, "Sign in successfully!", result));
+
+        return Ok(ApiResponse<AuthResponseDto>.SuccessResponse(200, "Sign in successfully!", result));
     }
 }
 

@@ -15,12 +15,14 @@ public class AuthServices : IAuthService
     // dependecny injection
     private readonly AppDbContext _appdbcontext;
     private readonly IPasswordHasher<User> _passwordHasher;
+    private readonly IJwtService _jwtService;
 
     // 
-    public AuthServices(AppDbContext appDbContext, IPasswordHasher<User> passwordhasher)
+    public AuthServices(AppDbContext appDbContext, IPasswordHasher<User> passwordhasher, IJwtService jwtService)
     {
         _appdbcontext = appDbContext;
         _passwordHasher = passwordhasher;
+        _jwtService = jwtService;
     }
 
 
@@ -59,11 +61,10 @@ public class AuthServices : IAuthService
     }
 
     // login user 
-    public async Task<UserDto> SignInUser(LoginDto userdata)
+    public async Task<AuthResponseDto> SignInUser(LoginDto userdata)
     {
 
-        var findUser = await _appdbcontext.Users.FirstOrDefaultAsync(c => c.Email == userdata.Email);
-        Console.WriteLine($"find user ; {findUser}");
+        var findUser = await _appdbcontext.Users.FirstOrDefaultAsync(c => c.Email == userdata.Email.Trim());
 
         if (findUser == null)
         {
@@ -81,12 +82,20 @@ public class AuthServices : IAuthService
             throw new InvalidCredentialsException();
         }
 
-        return new UserDto
+        var (accessToken, expiresAt) =
+    _jwtService.GenerateAccessToken(findUser);
+
+        return new AuthResponseDto
         {
-            Id = findUser.Id,
-            FullName = findUser.FullName,
-            Email = findUser.Email,
-            CreatedAt = findUser.CreatedAt
+            User = new UserDto
+            {
+                Id = findUser.Id,
+                FullName = findUser.FullName,
+                Email = findUser.Email,
+                CreatedAt = findUser.CreatedAt
+            },
+            AccessToken = accessToken,
+            ExpiresAt = expiresAt
         };
     }
 
