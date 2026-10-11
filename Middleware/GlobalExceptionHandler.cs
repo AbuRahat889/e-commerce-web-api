@@ -22,28 +22,38 @@ public class GlobalExceptionHandler : IExceptionHandler
     {
         _logger.LogError(exception, "An error occurred.");
 
-        int statusCode;
-        string message;
-        List<string> errors;
+        var (statusCode, message, errors) = exception switch
+        {
+            EmailAlreadyExistsException =>
+                (
+                    StatusCodes.Status409Conflict,
+                    "Email already exists.",
+                    new List<string>
+                    {
+                        "Please use a different email address."
+                    }
+                ),
 
-        if (exception is EmailAlreadyExistsException)
-        {
-            statusCode = StatusCodes.Status409Conflict;
-            message = "Email already exists.";
-            errors = new List<string>
-            {
-                "Please use a different email address."
-            };
-        }
-        else
-        {
-            statusCode = StatusCodes.Status500InternalServerError;
-            message = "An unexpected error occurred.";
-            errors = new List<string>
-            {
-                "Something went wrong. Please try again later."
-            };
-        }
+            InvalidCredentialsException =>
+                (
+                    StatusCodes.Status401Unauthorized,
+                    "Invalid email or password.",
+                    new List<string>
+                    {
+                        "Please check your credentials."
+                    }
+                ),
+
+            _ =>
+                (
+                    StatusCodes.Status500InternalServerError,
+                    "An unexpected error occurred.",
+                    new List<string>
+                    {
+                        "Something went wrong. Please try again later."
+                    }
+                )
+        };
 
         httpContext.Response.StatusCode = statusCode;
 

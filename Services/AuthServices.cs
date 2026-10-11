@@ -34,23 +34,17 @@ public class AuthServices : IAuthService
         {
             throw new EmailAlreadyExistsException();
         }
-
-
         var newUser = new User
         {
             Id = Guid.NewGuid(),
             FullName = userData.FullName.Trim(),
             Email = userData.Email,
-            // change this password with haspassword
-            Password = userData.Password,
             CreatedAt = DateTime.UtcNow
         };
         newUser.Password = _passwordHasher.HashPassword(
                newUser,
                userData.Password
            );
-
-
         _appdbcontext.Users.Add(newUser);
         await _appdbcontext.SaveChangesAsync();
 
@@ -62,7 +56,38 @@ public class AuthServices : IAuthService
             CreatedAt = newUser.CreatedAt
         };
 
+    }
 
+    // login user 
+    public async Task<UserDto> SignInUser(LoginDto userdata)
+    {
+
+        var findUser = await _appdbcontext.Users.FirstOrDefaultAsync(c => c.Email == userdata.Email);
+        Console.WriteLine($"find user ; {findUser}");
+
+        if (findUser == null)
+        {
+            throw new InvalidCredentialsException();
+        }
+
+        var passwordResult = _passwordHasher.VerifyHashedPassword(
+            findUser,
+            findUser.Password,
+            userdata.Password
+        );
+
+        if (passwordResult == PasswordVerificationResult.Failed)
+        {
+            throw new InvalidCredentialsException();
+        }
+
+        return new UserDto
+        {
+            Id = findUser.Id,
+            FullName = findUser.FullName,
+            Email = findUser.Email,
+            CreatedAt = findUser.CreatedAt
+        };
     }
 
 }

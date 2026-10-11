@@ -21,12 +21,24 @@ public class AuthControllers : ControllerBase
     }
 
 
+    // registar api 
     [HttpPost("register")]
-    public async Task<IActionResult> RegisterUser([FromBody] RegisterUserDto userData)
+    public async Task<IActionResult> RegisterUser([FromBody] RegisterUserDto data)
     {
-        var result = await _authservece.RegisterUser(userData);
+        var result = await _authservece.RegisterUser(data);
 
         return Ok(ApiResponse<UserDto>.SuccessResponse(200, "User register successfully!", result));
+    }
+
+    // login api 
+    [HttpPost("login")]
+    public async Task<IActionResult> SignInUser([FromBody] LoginDto data)
+    {
+        Console.WriteLine($"from controller : {data}");
+
+        var result = await
+         _authservece.SignInUser(data);
+        return Ok(ApiResponse<UserDto>.SuccessResponse(200, "Sign in successfully!", result));
     }
 }
 
