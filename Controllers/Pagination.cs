@@ -1,4 +1,6 @@
 
+using System.ComponentModel.DataAnnotations;
+
 public class Pagination<T>
 {
     public PaginationMeta Meta { get; set; } = new();
@@ -7,6 +9,7 @@ public class Pagination<T>
 
 public class PaginationMeta
 {
+
     public int Page { get; set; }
     public int PageSize { get; set; }
     public int TotalCount { get; set; }
