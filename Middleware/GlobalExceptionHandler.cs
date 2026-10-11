@@ -1,5 +1,6 @@
 
 using e_commerce_web_api.Common;
+using e_commerce_web_api.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
 
 namespace e_commerce_web_api.Middleware;
@@ -19,25 +20,43 @@ public class GlobalExceptionHandler : IExceptionHandler
         Exception exception,
         CancellationToken cancellationToken)
     {
-        // Log the actual exception for debugging
-        _logger.LogError(
-            exception,
-            "An unexpected error occurred.");
+        _logger.LogError(exception, "An error occurred.");
 
-        httpContext.Response.StatusCode =
-            StatusCodes.Status500InternalServerError;
+        int statusCode;
+        string message;
+        List<string> errors;
 
-        var response = ApiResponse<object>.ErrorResponse(
-            message: "An unexpected error occurred.",
-            statusCode: StatusCodes.Status500InternalServerError,
-            errors: new List<string>
+        if (exception is EmailAlreadyExistsException)
+        {
+            statusCode = StatusCodes.Status409Conflict;
+            message = "Email already exists.";
+            errors = new List<string>
+            {
+                "Please use a different email address."
+            };
+        }
+        else
+        {
+            statusCode = StatusCodes.Status500InternalServerError;
+            message = "An unexpected error occurred.";
+            errors = new List<string>
             {
                 "Something went wrong. Please try again later."
-            });
+            };
+        }
+
+        httpContext.Response.StatusCode = statusCode;
+
+        var response = ApiResponse<object>.ErrorResponse(
+            message: message,
+            statusCode: statusCode,
+            errors: errors
+        );
 
         await httpContext.Response.WriteAsJsonAsync(
             response,
-            cancellationToken);
+            cancellationToken
+        );
 
         return true;
     }

@@ -5,5 +5,5 @@ namespace e_commerce_web_api.Interfaces;
 
 public interface IAuthService
 {
-    Task<UserDto> RegesterUser(RegisterUserDto userData);
+    Task<UserDto> RegisterUser(RegisterUserDto userData);
 }

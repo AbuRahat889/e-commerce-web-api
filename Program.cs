@@ -2,8 +2,10 @@ using e_commerce_web_api.Common;
 using e_commerce_web_api.Data;
 using e_commerce_web_api.Interfaces;
 using e_commerce_web_api.Middleware;
+using e_commerce_web_api.Models;
 using e_commerce_web_api.Profiles;
 using e_commerce_web_api.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +16,9 @@ var builder = WebApplication.CreateBuilder(args);
 // builder.Services.AddSingleton()
 builder.Services.AddScoped<ICategoryService, CategoriesServices>();
 builder.Services.AddScoped<IAuthService, AuthServices>();
+builder.Services.AddScoped<
+    IPasswordHasher<User>,
+    PasswordHasher<User>>();
 builder.Services.AddControllers();
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));

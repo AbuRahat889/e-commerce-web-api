@@ -1,8 +1,10 @@
 
 using e_commerce_web_api.Data;
 using e_commerce_web_api.DTOs;
+using e_commerce_web_api.Exceptions;
 using e_commerce_web_api.Interfaces;
 using e_commerce_web_api.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 namespace e_commerce_web_api.Services;
 
@@ -12,22 +14,25 @@ public class AuthServices : IAuthService
     // call data base
     // dependecny injection
     private readonly AppDbContext _appdbcontext;
+    private readonly IPasswordHasher<User> _passwordHasher;
+
     // 
-    public AuthServices(AppDbContext appDbContext)
+    public AuthServices(AppDbContext appDbContext, IPasswordHasher<User> passwordhasher)
     {
         _appdbcontext = appDbContext;
+        _passwordHasher = passwordhasher;
     }
 
 
     // registar user services 
 
-    public async Task<UserDto> RegesterUser(RegisterUserDto userData)
+    public async Task<UserDto> RegisterUser(RegisterUserDto userData)
     {
 
-        var findUser = await _appdbcontext.Users.FirstOrDefaultAsync(c => c.Email == userData.Email);
+        var findUser = await _appdbcontext.Users.FirstOrDefaultAsync(c => c.Email == userData.Email.Trim());
         if (findUser != null)
         {
-            throw new InvalidOperationException("This email already exits");
+            throw new EmailAlreadyExistsException();
         }
 
 
@@ -40,10 +45,10 @@ public class AuthServices : IAuthService
             Password = userData.Password,
             CreatedAt = DateTime.UtcNow
         };
-        // newUser.PasswordHash = _passwordHasher.HashPassword(
-        //        newUser,
-        //        userData.Password
-        //    );
+        newUser.Password = _passwordHasher.HashPassword(
+               newUser,
+               userData.Password
+           );
 
 
         _appdbcontext.Users.Add(newUser);
