@@ -1,11 +1,13 @@
 using e_commerce_web_api.Common;
 using e_commerce_web_api.DTOs;
 using e_commerce_web_api.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace e_commerce_web_api.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/v1/categories")]
     public class CategoryController : ControllerBase
     {
@@ -18,6 +20,7 @@ namespace e_commerce_web_api.Controllers
         // end dependency constructor
 
         // for get request 
+        // [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetCategories([FromQuery] string searchValue = "", [FromQuery] int page = 1, [FromQuery] int PageSize = 10)
         {

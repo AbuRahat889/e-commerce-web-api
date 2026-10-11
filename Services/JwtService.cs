@@ -44,7 +44,7 @@ public class JwtService : IJwtService
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
         };
 
-        var token = new JwtSecurityToken(
+        var token = new JwtSecurityToken(   
             issuer: _jwtSettings.Issuer,
             audience: _jwtSettings.Audience,
             claims: claims,
