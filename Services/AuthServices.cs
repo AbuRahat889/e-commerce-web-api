@@ -41,6 +41,7 @@ public class AuthServices : IAuthService
             Id = Guid.NewGuid(),
             FullName = userData.FullName.Trim(),
             Email = userData.Email,
+            Role = userData.Role,
             CreatedAt = DateTime.UtcNow
         };
         newUser.Password = _passwordHasher.HashPassword(
@@ -92,7 +93,8 @@ public class AuthServices : IAuthService
                 Id = findUser.Id,
                 FullName = findUser.FullName,
                 Email = findUser.Email,
-                CreatedAt = findUser.CreatedAt
+                CreatedAt = findUser.CreatedAt,
+                Role = findUser.Role
             },
             AccessToken = accessToken,
             ExpiresAt = expiresAt

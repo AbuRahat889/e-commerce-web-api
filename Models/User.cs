@@ -23,6 +23,7 @@ public class User
     [Required]
     [MinLength(8)]
     public string Password { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
 }
