@@ -40,6 +40,29 @@ public class ProductService : IProductService
 
     }
 
+    // get all product 
+    public async Task<Pagination<ReadProductDto>> GetAllProductsAsync(int page, int pageSize)
+    {
+        IQueryable<Product> query = _appdbcontext.Products.Include(p => p.Category);
+        var totalCount = await query.CountAsync();
+
+        var items = await query.OrderByDescending(c => c.CreatedAt).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+        var result = _mapper.Map<List<ReadProductDto>>(items);
+
+        return new Pagination<ReadProductDto>
+        {
+            Data = result,
+            Meta = new PaginationMeta
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+            }
+        };
+
+    }
+
 
 
 }

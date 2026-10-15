@@ -32,5 +32,14 @@ public class ProductControllers : ControllerBase
         );
     }
 
+    // get all products
+    [HttpGet]
+    public async Task<ActionResult> GetAllProductsAsync([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    {
+        var result = await _productService.GetAllProductsAsync(page, pageSize);
+
+        return Ok(ApiResponse<Pagination<ReadProductDto>>.SuccessResponse(200, "Products retrive successfully ", result));
+    }
+
 
 }

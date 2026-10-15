@@ -6,7 +6,7 @@ public interface IProductService
 {
     Task<ReadProductDto> CreateProductAsync(CreateProductDto data);
 
-    // Task<IEnumerable<ReadProductDto>> GetAllProductsAsync();
+    Task<Pagination<ReadProductDto>> GetAllProductsAsync(int page, int pageSize);
 
     // Task<ReadProductDto?> GetProductByIdAsync(Guid id);
 }

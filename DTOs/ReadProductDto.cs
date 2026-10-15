@@ -8,5 +8,6 @@ public class ReadProductDto
     public string ProductName { get; set; } = string.Empty;
     public decimal Price { get; set; }
     public Guid CategoryId { get; set; }
+    public CategoryReadDto Category { get; set; } = null!;
     public DateTime CreatedAt { get; set; }
 }
