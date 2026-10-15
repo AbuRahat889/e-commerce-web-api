@@ -10,7 +10,7 @@ public class Product
 
     [Required]
     [MaxLength(150)]
-    public string Name { get; set; } = string.Empty;
+    public string ProductName { get; set; } = string.Empty;
 
     [Range(0.01, double.MaxValue)]
     public decimal Price { get; set; }

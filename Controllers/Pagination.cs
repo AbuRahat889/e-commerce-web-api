@@ -1,6 +1,4 @@
 
-using System.ComponentModel.DataAnnotations;
-
 public class Pagination<T>
 {
     public PaginationMeta Meta { get; set; } = new();

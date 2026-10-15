@@ -19,6 +19,7 @@ var builder = WebApplication.CreateBuilder(args);
 // builder.Services.AddSingleton()
 builder.Services.AddScoped<ICategoryService, CategoriesServices>();
 builder.Services.AddScoped<IAuthService, AuthServices>();
+builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<
     IPasswordHasher<User>,
     PasswordHasher<User>>();
@@ -32,7 +33,9 @@ builder.Services.AddProblemDetails();
 builder.Services.AddAutoMapper(cfg =>
 {
     cfg.AddProfile<CategoryProfile>();
+    cfg.AddProfile<ProductProfile>();
 });
+
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
     options.InvalidModelStateResponseFactory = context =>
