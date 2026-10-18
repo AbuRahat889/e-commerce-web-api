@@ -10,9 +10,11 @@ using e_commerce_web_api.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 // Add services to the container.
 // registar controllers
@@ -26,6 +28,17 @@ builder.Services.AddScoped<
 builder.Services.AddControllers();
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+// register redis for connect redis server
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+{
+    var connectionString = builder.Configuration
+        .GetConnectionString("Redis");
+
+    return ConnectionMultiplexer.Connect(connectionString!);
+});
+
+
+// end redis 
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
@@ -62,6 +75,17 @@ builder.Services.AddJwtAuthentication(
 
 
 var app = builder.Build();
+
+// test redis 
+// var redis = app.Services.GetRequiredService<IConnectionMultiplexer>();
+
+// var db = redis.GetDatabase();
+
+// await db.StringSetAsync("test:message", "Hello from .NET");
+
+// var value = await db.StringGetAsync("test:message");
+
+// Console.WriteLine($"Redis Test: {value}");
 // middlewares
 app.UseExceptionHandler();
 app.UseCustomStatusCodePages();
