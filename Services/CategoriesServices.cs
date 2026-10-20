@@ -29,7 +29,7 @@ public class CategoriesServices : ICategoryService
         await _redisDb.StringIncrementAsync(
             "categories:cache-version");
     }
-    
+
     // get all category services
     public async Task<Pagination<CategoryReadDto>> GetAllCategory(
         string searchValue,
@@ -110,12 +110,49 @@ public class CategoriesServices : ICategoryService
     // get category by id 
     public async Task<CategoryReadDto?> GetCategoryById(Guid categoryId)
     {
+        // 1. Get the current cache version
+        const string versionKey = "categories:cache-version";
+
+        var versionValue = await _redisDb.StringGetAsync(versionKey);
+        var version = versionValue.IsNull
+            ? "0"
+            : versionValue.ToString();
+
+        // 2. Create a unique cache key for this category
+        var cacheKey = $"categories:single:v{version}:{categoryId}";
+
+        // 3. Check Redis cache
+        var cachedData = await _redisDb.StringGetAsync(cacheKey);
+
+        if (!cachedData.IsNull)
+        {
+            var cachedCategory =
+                JsonSerializer.Deserialize<CategoryReadDto>(
+                    cachedData.ToString());
+
+            if (cachedCategory != null)
+                return cachedCategory;
+        }
+
+        // miss cache 
         var findCategory = await _appDbContext.Categories.FindAsync(categoryId);
         if (findCategory == null)
         {
             return null;
         }
-        return _mapper.Map<CategoryReadDto>(findCategory);
+        // add data into redis 
+        // 5. Map entity to DTO
+        var result = _mapper.Map<CategoryReadDto>(findCategory);
+
+        // 6. Store in Redis for 5 minutes
+        var json = JsonSerializer.Serialize(result);
+
+        await _redisDb.StringSetAsync(
+            cacheKey,
+            json,
+            TimeSpan.FromMinutes(5));
+
+        return result;
     }
     // create category 
     public async Task<CategoryReadDto> CreateCategory(CreateCategoryDto categorieData)
