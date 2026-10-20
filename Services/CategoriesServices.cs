@@ -5,6 +5,7 @@ using e_commerce_web_api.Interfaces;
 using e_commerce_web_api.Models;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
+using System.Collections.Concurrent;
 using System.Text.Json;
 
 namespace e_commerce_web_api.Services;
@@ -16,6 +17,7 @@ public class CategoriesServices : ICategoryService
 
     private readonly IMapper _mapper;
     private readonly IDatabase _redisDb;
+    private readonly ConcurrentDictionary<string, SemaphoreSlim> _cacheLocks = new();
     // dependency injection 
     public CategoriesServices(AppDbContext appdbcontext, IMapper mapper, IConnectionMultiplexer redis)
     {
@@ -65,46 +67,120 @@ public class CategoriesServices : ICategoryService
             }
         }
 
-        // 4. Cache miss: query PostgreSQL
-        IQueryable<Category> query = _appDbContext.Categories;
 
-        if (!string.IsNullOrWhiteSpace(searchValue))
+        // 4. Cache miss: get a lock for this cache key
+        var cacheLock = _cacheLocks.GetOrAdd(
+            cacheKey,
+            _ => new SemaphoreSlim(1, 1));
+
+        await cacheLock.WaitAsync();
+
+        try
         {
-            query = query.Where(c =>
-                c.Name != null &&
-                EF.Functions.ILike(c.Name, $"%{normalizedSearch.Trim()}%"));
+            // 5. Check Redis again after acquiring the lock
+            cachedData = await _redisDb.StringGetAsync(cacheKey);
+
+            if (!cachedData.IsNull)
+            {
+                var cachedResult =
+                    JsonSerializer.Deserialize<Pagination<CategoryReadDto>>(
+                        cachedData.ToString());
+
+                if (cachedResult != null)
+                {
+                    return cachedResult;
+                }
+            }
+
+            // 6. Still a cache miss: query PostgreSQL
+            IQueryable<Category> query = _appDbContext.Categories;
+
+            if (!string.IsNullOrWhiteSpace(searchValue))
+            {
+                query = query.Where(c =>
+                    c.Name != null &&
+                    EF.Functions.ILike(
+                        c.Name,
+                        $"%{normalizedSearch}%"));
+            }
+
+            var totalCount = await query.CountAsync();
+
+            var items = await query
+                .OrderByDescending(c => c.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var result = _mapper.Map<List<CategoryReadDto>>(items);
+
+            var response = new Pagination<CategoryReadDto>
+            {
+                Data = result,
+                Meta = new PaginationMeta
+                {
+                    Page = page,
+                    PageSize = pageSize,
+                    TotalCount = totalCount
+                }
+            };
+
+            // 7. Save the result in Redis for 5 minutes
+            var json = JsonSerializer.Serialize(response);
+
+            await _redisDb.StringSetAsync(
+                cacheKey,
+                json,
+                TimeSpan.FromMinutes(5));
+
+            return response;
+        }
+        finally
+        {
+            cacheLock.Release();
         }
 
-        var totalCount = await query.CountAsync();
 
-        var items = await query
-            .OrderByDescending(c => c.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
+        // 4. Cache miss: query PostgreSQL
+        // IQueryable<Category> query = _appDbContext.Categories;
 
-        var result = _mapper.Map<List<CategoryReadDto>>(items);
+        // if (!string.IsNullOrWhiteSpace(searchValue))
+        // {
+        //     query = query.Where(c =>
+        //         c.Name != null &&
+        //         EF.Functions.ILike(c.Name, $"%{normalizedSearch.Trim()}%"));
+        // }
 
-        var response = new Pagination<CategoryReadDto>
-        {
-            Data = result,
-            Meta = new PaginationMeta
-            {
-                Page = page,
-                PageSize = pageSize,
-                TotalCount = totalCount
-            }
-        };
+        // var totalCount = await query.CountAsync();
 
-        // 5. Store the result in Redis for 5 minutes
-        var json = JsonSerializer.Serialize(response);
+        // var items = await query
+        //     .OrderByDescending(c => c.CreatedAt)
+        //     .Skip((page - 1) * pageSize)
+        //     .Take(pageSize)
+        //     .ToListAsync();
 
-        await _redisDb.StringSetAsync(
-            cacheKey,
-            json,
-            TimeSpan.FromMinutes(5));
+        // var result = _mapper.Map<List<CategoryReadDto>>(items);
 
-        return response;
+        // var response = new Pagination<CategoryReadDto>
+        // {
+        //     Data = result,
+        //     Meta = new PaginationMeta
+        //     {
+        //         Page = page,
+        //         PageSize = pageSize,
+        //         TotalCount = totalCount
+        //     }
+        // };
+
+        // // 5. Store the result in Redis for 5 minutes
+        // var json = JsonSerializer.Serialize(response);
+
+        // await _redisDb.StringSetAsync(
+        //     cacheKey,
+        //     json,
+        //     TimeSpan.FromMinutes(5));
+
+        // return response;
     }
 
     // get category by id 
