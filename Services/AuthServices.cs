@@ -118,6 +118,10 @@ public class AuthServices : IAuthService
         {
             throw new InvalidCredentialsException();
         }
+        if (!findUser.IsEmailVerified)
+        {
+            throw new EmailNotVerifiedException();
+        }
 
         var (accessToken, expiresAt) =
     _jwtService.GenerateAccessToken(findUser);
@@ -135,6 +139,42 @@ public class AuthServices : IAuthService
             AccessToken = accessToken,
             ExpiresAt = expiresAt
         };
+    }
+
+    // verify otp 
+
+    public async Task<bool> VerifyEmail(VerifyEmailDto request)
+    {
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var key = $"otp:email-verification:{normalizedEmail}";
+
+        var storedOtp = await _redisDb.StringGetAsync(key);
+
+        if (storedOtp.IsNullOrEmpty)
+        {
+            throw new Exception("OTP is invalid or expired.");
+        }
+
+        if (storedOtp.ToString() != request.Otp)
+        {
+            throw new Exception("Invalid OTP.");
+        }
+
+        var user = await _appdbcontext.Users
+            .FirstOrDefaultAsync(u => u.Email == normalizedEmail);
+
+        if (user == null)
+        {
+            throw new Exception("User not found.");
+        }
+
+        user.IsEmailVerified = true;
+
+        await _appdbcontext.SaveChangesAsync();
+
+        await _redisDb.KeyDeleteAsync(key);
+
+        return true;
     }
 
 }

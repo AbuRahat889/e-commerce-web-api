@@ -16,3 +16,12 @@ public class EmailAlreadyExistsException : Exception
     {
     }
 }
+
+
+public class EmailNotVerifiedException : Exception
+{
+    public EmailNotVerifiedException()
+        : base("Your email is not verified. Please verify your email first.")
+    {
+    }
+}

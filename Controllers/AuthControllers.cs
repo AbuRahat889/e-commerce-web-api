@@ -41,5 +41,21 @@ public class AuthControllers : ControllerBase
 
         return Ok(ApiResponse<AuthResponseDto>.SuccessResponse(200, "Sign in successfully!", result));
     }
+
+    // verify otp 
+
+    [HttpPost("verify-email")]
+    public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailDto request)
+    {
+        var result = await _authservece.VerifyEmail(request);
+
+        return Ok(new
+        {
+            success = result,
+            message = "Email verified successfully."
+        });
+    }
+
+
 }
 

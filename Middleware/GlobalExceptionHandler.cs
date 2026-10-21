@@ -24,23 +24,32 @@ public class GlobalExceptionHandler : IExceptionHandler
 
         var (statusCode, message, errors) = exception switch
         {
-            EmailAlreadyExistsException =>
+            EmailAlreadyExistsException ex =>
                 (
                     StatusCodes.Status409Conflict,
                     "Email already exists.",
                     new List<string>
                     {
-                        "Please use a different email address."
+                        ex.Message
                     }
                 ),
 
-            InvalidCredentialsException =>
+            InvalidCredentialsException ex =>
                 (
                     StatusCodes.Status401Unauthorized,
                     "Invalid email or password.",
                     new List<string>
                     {
-                        "Please check your credentials."
+                          ex.Message
+                    }
+                ),
+            EmailNotVerifiedException ex =>
+                (
+                    StatusCodes.Status403Forbidden,
+                    "Email verification required.",
+                    new List<string>
+                    {
+                             ex.Message
                     }
                 ),
 
