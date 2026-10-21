@@ -1,4 +1,5 @@
 
+using System.Security.Cryptography;
 using e_commerce_web_api.Data;
 using e_commerce_web_api.DTOs;
 using e_commerce_web_api.Exceptions;
@@ -6,6 +7,7 @@ using e_commerce_web_api.Interfaces;
 using e_commerce_web_api.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 namespace e_commerce_web_api.Services;
 
 public class AuthServices : IAuthService
@@ -13,21 +15,43 @@ public class AuthServices : IAuthService
 
     // call data base
     // dependecny injection
+    private readonly IDatabase _redisDb;
     private readonly AppDbContext _appdbcontext;
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly IJwtService _jwtService;
+    private readonly IEmailService _emailService;
 
     // 
-    public AuthServices(AppDbContext appDbContext, IPasswordHasher<User> passwordhasher, IJwtService jwtService)
+    public AuthServices(AppDbContext appDbContext, IPasswordHasher<User> passwordhasher, IJwtService jwtService, IConnectionMultiplexer redis, IEmailService emailService)
     {
         _appdbcontext = appDbContext;
         _passwordHasher = passwordhasher;
         _jwtService = jwtService;
+        _redisDb = redis.GetDatabase();
+        _emailService = emailService;
     }
 
+    // generate otp
+    private static string GenerateOtp()
+    {
+        var otp = RandomNumberGenerator.GetInt32(0, 1_000_000);
+        return otp.ToString("D6");
+    }
+    // store opt into redis
+    private async Task StoreEmailVerificationOtp(
+    string email,
+    string otp)
+    {
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var key = $"otp:email-verification:{normalizedEmail}";
+
+        await _redisDb.StringSetAsync(
+            key,
+            otp,
+            TimeSpan.FromMinutes(5));
+    }
 
     // registar user services 
-
     public async Task<UserDto> RegisterUser(RegisterUserDto userData)
     {
 
@@ -51,11 +75,23 @@ public class AuthServices : IAuthService
         _appdbcontext.Users.Add(newUser);
         await _appdbcontext.SaveChangesAsync();
 
+        // otp 
+        var otp = GenerateOtp();
+
+        await StoreEmailVerificationOtp(newUser.Email, otp);
+
+        await _emailService.SendEmailAsync(
+            newUser.Email,
+            "Verify Your Email",
+            $"Your email verification OTP is: {otp}\n\nThis OTP expires in 5 minutes.");
+
+
         return new UserDto
         {
             Id = newUser.Id,
             FullName = newUser.FullName,
             Email = newUser.Email,
+            IsEmailVerified = false,
             CreatedAt = newUser.CreatedAt
         };
 

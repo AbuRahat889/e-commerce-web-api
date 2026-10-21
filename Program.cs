@@ -12,8 +12,17 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
 
-
+DotNetEnv.Env.Load();
 var builder = WebApplication.CreateBuilder(args);
+// Console.WriteLine(
+//     $"ENV username loaded: {!string.IsNullOrWhiteSpace(
+//         Environment.GetEnvironmentVariable("EMAIL_SETTINGS__USERNAME"))}");
+
+// Console.WriteLine(
+//     $"SMTP username loaded in Configuration: " +
+//     $"{!string.IsNullOrWhiteSpace(builder.Configuration["EMAIL_SETTINGS:USERNAME"])}");
+Console.WriteLine(
+$"SenderEmail: {builder.Configuration["EmailSettings:SenderEmail"]}");
 
 
 // Add services to the container.
@@ -36,6 +45,11 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
 
     return ConnectionMultiplexer.Connect(connectionString!);
 });
+// email SMTP server
+builder.Services.Configure<EmailSettings>(
+    builder.Configuration.GetSection("EmailSettings"));
+
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
 
 // end redis 

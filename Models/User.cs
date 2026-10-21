@@ -24,6 +24,7 @@ public class User
     [MinLength(8)]
     public string Password { get; set; } = string.Empty;
     public string Role { get; set; } = string.Empty;
+    public bool IsEmailVerified { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
 
