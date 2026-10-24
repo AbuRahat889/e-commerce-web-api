@@ -2,8 +2,8 @@ using System;
 using e_commerce_web_api.Common;
 using e_commerce_web_api.DTOs;
 using e_commerce_web_api.Interfaces;
-using e_commerce_web_api.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace e_commerce_web_api.Controllers;
 
@@ -32,6 +32,7 @@ public class AuthControllers : ControllerBase
 
     // login api 
     [HttpPost("login")]
+    [EnableRateLimiting("LoginPolicy")]
     public async Task<IActionResult> SignInUser([FromBody] LoginDto data)
     {
         Console.WriteLine($"from controller : {data}");

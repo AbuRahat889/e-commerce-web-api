@@ -1,3 +1,4 @@
+using System.Threading.RateLimiting;
 using e_commerce_web_api.Common;
 using e_commerce_web_api.Configurations;
 using e_commerce_web_api.Data;
@@ -41,8 +42,64 @@ builder.Services.Configure<EmailSettings>(
 
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
+// rate limit 
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy("LoginPolicy", httpContext =>
+    {
+        var ip = httpContext.Connection.RemoteIpAddress?.ToString()
+                 ?? "unknown";
 
-// end redis 
+        return RateLimitPartition.GetFixedWindowLimiter(
+            ip,
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            });
+    });
+
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        var ip = context.HttpContext.Connection.RemoteIpAddress?.ToString()
+                 ?? "unknown";
+
+        var redis = context.HttpContext.RequestServices
+            .GetRequiredService<IConnectionMultiplexer>();
+
+        var db = redis.GetDatabase();
+        var lockoutKey = $"login:lockout:{ip}";
+
+        // Lockout check, 
+        await db.StringSetAsync(
+            lockoutKey,
+            "1",
+            expiry: TimeSpan.FromMinutes(15),
+            when: When.NotExists
+        );
+
+        context.HttpContext.Response.StatusCode = 429;
+
+        var response = ApiResponse<object>.ErrorResponse(
+            message: "Too many login attempts.",
+            statusCode: 429,
+            errors: new List<string>
+            {
+                "Your IP is temporarily blocked. Please try again after 15 minutes."
+            }
+        );
+
+        await context.HttpContext.Response.WriteAsJsonAsync(
+            response,
+            cancellationToken
+        );
+    };
+});
+
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
@@ -79,15 +136,9 @@ builder.Services.AddJwtAuthentication(
 
 
 var app = builder.Build();
+app.UseRateLimiter();
+app.UseMiddleware<LoginLockoutMiddleware>();
 
-// test redis 
-// var redis = app.Services.GetRequiredService<IConnectionMultiplexer>();
-
-// var db = redis.GetDatabase();
-
-// await db.StringSetAsync("test:message", "Hello from .NET");
-
-// var value = await db.StringGetAsync("test:message");
 
 // Console.WriteLine($"Redis Test: {value}");
 // middlewares
