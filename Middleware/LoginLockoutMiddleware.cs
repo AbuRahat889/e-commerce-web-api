@@ -18,10 +18,14 @@ public class LoginLockoutMiddleware
     {
         var isLoginRequest =
             HttpMethods.IsPost(context.Request.Method) &&
-            context.Request.Path.Value?.EndsWith(
+            (context.Request.Path.Value?.EndsWith(
                 "/login",
                 StringComparison.OrdinalIgnoreCase
-            ) == true;
+            ) == true ||
+            context.Request.Path.Value?.EndsWith(
+                "/verify-email",
+                StringComparison.OrdinalIgnoreCase
+            ) == true);
 
         if (!isLoginRequest)
         {
@@ -47,7 +51,7 @@ public class LoginLockoutMiddleware
                 statusCode: 429,
                 errors: new List<string>
                 {
-                    "Your IP is temporarily blocked. Please try again after 15 minutes. from middleware"
+                    "Try multiple time. Your IP is temporarily blocked. Please try again after 15 minutes."
                 }
             );
 

@@ -46,6 +46,7 @@ public class AuthControllers : ControllerBase
     // verify otp 
 
     [HttpPost("verify-email")]
+     [EnableRateLimiting("LoginPolicy")]
     public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailDto request)
     {
         var result = await _authservece.VerifyEmail(request);

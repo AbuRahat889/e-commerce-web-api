@@ -84,17 +84,7 @@ builder.Services.AddRateLimiter(options =>
 
         context.HttpContext.Response.StatusCode = 429;
 
-        var response = ApiResponse<object>.ErrorResponse(
-            message: "Too many login attempts.",
-            statusCode: 429,
-            errors: new List<string>
-            {
-                "Your IP is temporarily blocked. Please try again after 15 minutes."
-            }
-        );
-
         await context.HttpContext.Response.WriteAsJsonAsync(
-            response,
             cancellationToken
         );
     };
